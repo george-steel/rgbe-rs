@@ -8,6 +8,6 @@ pub fn main() -> ImageResult<()> {
     }
     let path = path::Path::new(&args[1]);
     let (width, height, data) = rgbe::load_radiance_file(path)?;
-    let outpath = path.with_extension("rgbe8.png");
+    let outpath = path.with_extension("rgbe.png");
     rgbe::save_rgbe8_png_file(&outpath, width, height, &data)
 }

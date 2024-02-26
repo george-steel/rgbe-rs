@@ -128,11 +128,11 @@ impl RGBE8 {
 }
 
 impl RGBA16F {
-    fn into_rgb9e5(self) -> RGB9E5 {
+    pub fn into_rgb9e5(self) -> RGB9E5 {
         RGB9E5::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
     }
 
-    fn into_rgbe8(self) -> RGBE8 {
+    pub fn into_rgbe8(self) -> RGBE8 {
         RGBE8::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
     }
 }
