@@ -1,31 +1,34 @@
 use bytemuck::{Pod, Zeroable};
 use half::f16;
 
-// Aligned representation of Radiance RGBE8 pixel.
-// r, g, and b are subnormal mantissas and e (taking the place of the alpha channel) is a common exponent.
-// This is commonly loaded from Radiance pictures (.hdr).
-//
-// As it uses 4 u8 components, this firmat can also be used with ONG compression,
-// with the exponent taking the place of the alpha channel.
-// This will preserve chroma but distort luminance if loaded as a normal PNG,
-// making thumbnailers somewhat useful for image identification.
+/// Aligned representation of Radiance RGBE8 pixel.
+/// r, g, and b are subnormal mantissas and e (taking the place of the alpha channel) is a common exponent.
+/// This is commonly loaded from Radiance pictures (.hdr).
+///
+/// As it uses 4 u8 components, this format can also be used with PNG compression,
+/// with the exponent taking the place of the alpha channel.
+/// This will preserve chroma but distort luminance if loaded as a normal PNG,
+/// making thumbnailers somewhat useful for image identification.
 #[repr(C, align(4))]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Pod, Zeroable)]
 pub struct RGBE8 {
     pub r: u8,
     pub g: u8,
     pub b: u8,
-    pub e: u8, // bias of 128
+
+    // bias of 128
+    pub e: u8, 
 }
 
-// Aligned epresentation of rgb9e5ufloat texel.
-// Field order is from LSB to MSB with 9 bits each of subnormal R, G, and B mantissa
-// then 5 bits of a common exponent.
+/// Aligned epresentation of rgb9e5ufloat texel.
+/// Field order (from LSB to MSB) is 9 bits each of subnormal R, G, and B mantissa
+/// then 5 bits of a common exponent.
 #[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Pod, Zeroable)]
 pub struct RGB9E5(pub u32);
 
-// Aligned representation of rgba16float texel
+/// Aligned representation of rgba16float texel.
+/// This is a common render format for HDR images when creating or processing assets before conversion to a GPU-read-only RGBE format.
 #[repr(C, align(8))]
 #[derive(PartialEq, Clone, Copy, Debug, Pod, Zeroable)]
 pub struct RGBA16F {
@@ -36,10 +39,10 @@ pub struct RGBA16F {
 }
 
 impl RGB9E5 {
-    // Clamp and pack a triple of RGB float values into an RGB9E5 value.
-    //
-    // Ported from the C++ example in the DirectX docs (MIT licensed)
-    // https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Color.cpp
+    /// Clamp and pack a triple of RGB float values into an RGB9E5 value.
+    ///
+    /// Ported from the C++ example in the DirectX docs (MIT licensed)
+    /// https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Color.cpp
     pub fn pack(rgb: [f32;3]) -> Self {
         const MAX_F14:f32 = (0x1FF << 7) as f32;
         const MIN_NORM_F14:f32 = 1.0 / ((1 << 16) as f32);
@@ -77,7 +80,7 @@ impl RGB9E5 {
         RGB9E5(E | (B << 18) | (G << 9) | R)
     }
 
-    // Convert a packed color to individual floats
+    /// Convert a packed color to individual floats
     pub fn unpack(self) -> [f32;3] {
         let bias = (((self.0 & 0xf8000000) >> 27) as f32 - 15.0).exp2();
         let r = ((self.0) & 0x000001ff) as f32 * bias / 512.0;
@@ -88,8 +91,8 @@ impl RGB9E5 {
 }
 
 impl RGBE8 {
-    // Pack a triple of RGB float values into an RGBE8.
-    // This is not as optimized as RGB9E5::pack since it is designed for use in tooling instead of asset loading.
+    /// Pack a triple of RGB float values into an RGBE8.
+    /// This is not as optimized as RGB9E5::pack since it is designed for use in tooling instead of asset loading.
     pub fn pack(rgb: [f32;3]) -> Self {
         let max_channel = f32::MIN_POSITIVE.max(rgb[0]).max(rgb[1]).max(rgb[2]);
         // round to 8 bits of precision than take the next power of 2.
@@ -103,6 +106,7 @@ impl RGBE8 {
         RGBE8{r, g, b, e}
     }
 
+    /// Convert a packed color to individual floats
     pub fn unpack(self) -> [f32;3] {
         let bias = ((self.e as f32) - 128.0).exp2();
         let r = ((self.r as f32) / 256.0) * bias;
@@ -111,7 +115,8 @@ impl RGBE8 {
         [r,g,b]
     }
 
-    // Repack 
+    /// Repack RGBE8 into RGB9E5 for use on the GPU.
+    /// This can cause saturation or loss of precision if the exponent is outside the range of RGB9E5.
     pub fn repack_rgb9e5(self) -> RGB9E5 {
         let e = (self.e as i32) - 128;
         if e <= 15 && e >= -15 {
@@ -128,11 +133,52 @@ impl RGBE8 {
 }
 
 impl RGBA16F {
+    /// Convert four f32 values to f16.
+    /// Causes loss of precision.
+    pub fn from_f32(c: [f32; 4]) -> Self {
+        Self {
+            r: f16::from_f32(c[0]),
+            g: f16::from_f32(c[1]),
+            b: f16::from_f32(c[2]),
+            a: f16::from_f32(c[3]),
+        }
+    }
+
+    /// Pack the RGB values into an RGB9E5 texel. Ignores alpha.
+    /// Causes a slight loss of precision.
     pub fn into_rgb9e5(self) -> RGB9E5 {
         RGB9E5::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
     }
 
+    /// Pack the RGB values into an RGBE8 texel. Ignores alpha.
+    /// Causes a slight loss of precision.
     pub fn into_rgbe8(self) -> RGBE8 {
         RGBE8::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
+    }
+}
+
+impl From<RGBA16F> for [f32; 4] {
+    fn from(color: RGBA16F) -> Self {
+        [color.r.to_f32(), color.g.to_f32(), color.b.to_f32(), color.a.to_f32()]
+    }
+}
+
+impl From<RGBE8> for [f32; 3] {
+    fn from(color: RGBE8) -> Self {
+        color.unpack()
+    }
+}
+
+impl From<RGB9E5> for [f32; 3] {
+    fn from(color: RGB9E5) -> Self {
+        color.unpack()
+    }
+}
+
+/// RGB9E5 can be unpacked to RGBA16F without loss of precision.
+impl From<RGB9E5> for RGBA16F {
+    fn from(color: RGB9E5) -> Self {
+        let col32 = color.unpack();
+        RGBA16F::from_f32([col32[0], col32[1], col32[2], 1.0])
     }
 }
