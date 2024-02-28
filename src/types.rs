@@ -67,17 +67,17 @@ impl RGB9E5 {
         // This shifts the 9-bit values we need into the lowest bits, rounding as
         // needed.  Note that if the channel has a smaller exponent than the max
         // channel, it will shift even more.  This is intentional.
-        let R = (r + bias).to_bits() & 0x1ff;
-        let G = (g + bias).to_bits() & 0x1ff;
-        let B = (b + bias).to_bits() & 0x1ff;
+        let r_bits = (r + bias).to_bits() & 0x1ff;
+        let g_bits = (g + bias).to_bits() & 0x1ff;
+        let b_bits = (b + bias).to_bits() & 0x1ff;
 
         // Convert the Bias to the correct exponent in the upper 5 bits.
-        let E = (bias_bits << 4) + 0x10000000;
+        let e_bits = (bias_bits << 4) + 0x10000000;
 
         // Combine the fields.  RGB floats have unwanted data in the upper 9
         // bits.  Only red needs to mask them off because green and blue shift
         // it out to the left.
-        RGB9E5(E | (B << 18) | (G << 9) | R)
+        RGB9E5(e_bits | (b_bits << 18) | (g_bits << 9) | r_bits)
     }
 
     /// Convert a packed color to individual floats
@@ -119,15 +119,15 @@ impl RGBE8 {
     /// This can cause saturation or loss of precision if the exponent is outside the range of RGB9E5.
     pub fn repack_rgb9e5(self) -> RGB9E5 {
         let e = (self.e as i32) - 128;
-        if e <= 15 && e >= -15 {
+        if (-15..=15).contains(&e) {
             // Simple case where we can leave mantissas alone.
             let e5 = (e + 15) as u32;
             let r = self.r as u32;
             let g = self.g as u32;
             let b = self.b as u32;
-            return RGB9E5((e5 << 27) | (b << 19) | (g << 10) | (r << 1));
+            RGB9E5((e5 << 27) | (b << 19) | (g << 10) | (r << 1))
         } else {
-            return RGB9E5::pack(self.unpack());
+            RGB9E5::pack(self.unpack())
         }
     }
 }

@@ -1,4 +1,4 @@
-pub use crate::types::*;
+use crate::types::*;
 
 use image::{codecs::{hdr::HdrDecoder, png::{self, PngDecoder, PngEncoder}}, ImageDecoder, ImageEncoder, ImageError, ImageResult};
 use std::{fs::File, io::{BufRead, BufReader, Read, Write}, path::Path};
