@@ -1,4 +1,4 @@
-//! A library for handling RGBE-format HDR textures.
+//! A library for loading and handling RGBE-format HDR textures.
 //! 
 //! Provides types for handling common-exponent floating point texture formats as well as
 //! conversions between them and independent floating-point channels.

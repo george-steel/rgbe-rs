@@ -4,7 +4,7 @@ version = "0.0.1-alpha"
 edition = "2021"
 
 license = "MIT OR Apache-2.0"
-description = "A library for handling RGBE-format HDR images."
+description = "A library for loading and handling RGBE-format HDR textures."
 authors = ["George Steel"]
 readme = "README.md"
 
@@ -16,9 +16,9 @@ crate-type = ["rlib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytemuck = {version= "^1.14.3", features=["derive"]}
-half = {version="^2.3.1", features=["bytemuck"]}
-image = {version = "^0.24.8", default_features=false, features=["png", "hdr"] }
+bytemuck = {version= "1.14.3", features=["derive"]}
+half = {version="2.3.1", features=["bytemuck"]}
+image = {version = "0.24.8", default_features=false, features=["png", "hdr"] }
 
 [[bin]]
 

@@ -44,8 +44,8 @@ impl RGB9E5 {
     /// Ported from the C++ example in the DirectX docs (MIT licensed)
     /// https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Color.cpp
     pub fn pack(rgb: [f32;3]) -> Self {
-        const MAX_F14:f32 = (0x1FF << 7) as f32;
-        const MIN_NORM_F14:f32 = 1.0 / ((1 << 16) as f32);
+        const MAX_F14:f32 = (0x1FFu32 << 7) as f32;
+        const MIN_NORM_F14:f32 = 1.0 / ((1u32 << 16) as f32);
         let r = rgb[0].clamp(0.0, MAX_F14);
         let g = rgb[1].clamp(0.0, MAX_F14);
         let b = rgb[2].clamp(0.0, MAX_F14);
@@ -98,6 +98,7 @@ impl RGBE8 {
         // round to 8 bits of precision than take the next power of 2.
         let bias = f32::from_bits((max_channel.to_bits() + 0x00808000) & 0x7F800000);
 
+        // clamping is necessary in case of negative values.
         let r = ((rgb[0] / bias) * 256.0).round().clamp(0.0,255.0) as u8;
         let g = ((rgb[1] / bias) * 256.0).round().clamp(0.0,255.0) as u8;
         let b = ((rgb[2] / bias) * 256.0).round().clamp(0.0,255.0) as u8;
