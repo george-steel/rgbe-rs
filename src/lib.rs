@@ -7,6 +7,9 @@
 //!
 //! An intended use case for this ligrary is to store HDR textures as RGBE8 PNG files
 //! and convert them to RGB9E5 for the GPU when loading.
+//!
+//! Radiance HDR images can be converted to RGBE8 PNG files on the command line using
+//! the included `hdr2rgbe-png` tool.
 
 mod types;
 mod load;
