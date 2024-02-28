@@ -20,14 +20,14 @@ pub struct RGBE8 {
     pub e: u8, 
 }
 
-/// Aligned epresentation of `rgb9e5ufloat`` texel.
+/// Aligned epresentation of `rgb9e5ufloat` texel.
 /// Field order (from LSB to MSB) is 9 bits each of subnormal R, G, and B mantissa
 /// then 5 bits of a common exponent.
 #[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Pod, Zeroable)]
 pub struct RGB9E5(pub u32);
 
-/// Aligned representation of `rgba16float`` texel.
+/// Aligned representation of `rgba16float` texel.
 /// This is a common render format for HDR images when creating or processing assets before conversion to a GPU-read-only RGBE format.
 #[repr(C, align(8))]
 #[derive(PartialEq, Clone, Copy, Debug, Pod, Zeroable)]

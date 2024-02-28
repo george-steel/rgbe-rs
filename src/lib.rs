@@ -5,7 +5,7 @@
 //! Supports the [RGBE8] format which is storable in Radiance HDR and PNG files,
 //! as well as the [RGB9E5] GPU texture format.
 //!
-//! An intended use case for this ligrary is to store HDR textures as RGBE8 PNG files
+//! An intended use case for this library is to store HDR textures as RGBE8 PNG files
 //! and convert them to RGB9E5 for the GPU when loading.
 //!
 //! Radiance HDR images can be converted to RGBE8 PNG files on the command line using

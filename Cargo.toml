@@ -1,14 +1,18 @@
 [package]
 name = "rgbe"
-version = "0.0.1-alpha"
+version = "0.0.1"
 edition = "2021"
 
 license = "MIT OR Apache-2.0"
 description = "A library for loading and handling RGBE-format HDR textures."
 authors = ["George Steel"]
-readme = "README.md"
+keywords = ["graphics", "gamedev", "hdr", "texture"]
+categories = ["rendering::data-formats", "graphics", "game-development", "multimedia::images"]
 
+readme = "README.md"
 repository = "https://github.com/george-steel/rgbe-rs"
+homepage = "https://github.com/george-steel/rgbe-rs"
+documentation = "https://docs.rs/rgbe"
 
 [lib]
 crate-type = ["rlib"]
