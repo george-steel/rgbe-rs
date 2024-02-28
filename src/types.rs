@@ -20,14 +20,14 @@ pub struct RGBE8 {
     pub e: u8, 
 }
 
-/// Aligned epresentation of rgb9e5ufloat texel.
+/// Aligned epresentation of `rgb9e5ufloat`` texel.
 /// Field order (from LSB to MSB) is 9 bits each of subnormal R, G, and B mantissa
 /// then 5 bits of a common exponent.
 #[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Pod, Zeroable)]
 pub struct RGB9E5(pub u32);
 
-/// Aligned representation of rgba16float texel.
+/// Aligned representation of `rgba16float`` texel.
 /// This is a common render format for HDR images when creating or processing assets before conversion to a GPU-read-only RGBE format.
 #[repr(C, align(8))]
 #[derive(PartialEq, Clone, Copy, Debug, Pod, Zeroable)]
@@ -92,7 +92,7 @@ impl RGB9E5 {
 
 impl RGBE8 {
     /// Pack a triple of RGB float values into an RGBE8.
-    /// This is not as optimized as RGB9E5::pack since it is designed for use in tooling instead of asset loading.
+    /// This is not as optimized as [RGB9E5::pack] since it is designed for use in tooling instead of asset loading.
     pub fn pack(rgb: [f32;3]) -> Self {
         let max_channel = f32::MIN_POSITIVE.max(rgb[0]).max(rgb[1]).max(rgb[2]);
         // round to 8 bits of precision than take the next power of 2.
@@ -115,7 +115,7 @@ impl RGBE8 {
         [r,g,b]
     }
 
-    /// Repack RGBE8 into RGB9E5 for use on the GPU.
+    /// Repack RGBE8 into [RGB9E5] for use on the GPU.
     /// This can cause saturation or loss of precision if the exponent is outside the range of RGB9E5.
     pub fn repack_rgb9e5(self) -> RGB9E5 {
         let e = (self.e as i32) - 128;
@@ -144,13 +144,13 @@ impl RGBA16F {
         }
     }
 
-    /// Pack the RGB values into an RGB9E5 texel. Ignores alpha.
+    /// Pack the RGB values into an [RGB9E5] texel. Ignores alpha.
     /// Causes a slight loss of precision.
     pub fn into_rgb9e5(self) -> RGB9E5 {
         RGB9E5::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
     }
 
-    /// Pack the RGB values into an RGBE8 texel. Ignores alpha.
+    /// Pack the RGB values into an [RGBE8] texel. Ignores alpha.
     /// Causes a slight loss of precision.
     pub fn into_rgbe8(self) -> RGBE8 {
         RGBE8::pack([self.r.to_f32(), self.g.to_f32(), self.b.to_f32()])
@@ -175,7 +175,7 @@ impl From<RGB9E5> for [f32; 3] {
     }
 }
 
-/// RGB9E5 can be unpacked to RGBA16F without loss of precision.
+/// [RGB9E5] can be unpacked to [RGBA16F] without loss of precision.
 impl From<RGB9E5> for RGBA16F {
     fn from(color: RGB9E5) -> Self {
         let col32 = color.unpack();

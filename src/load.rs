@@ -1,10 +1,10 @@
 pub use crate::types::*;
 
-use image::{codecs::{hdr, png}, ImageDecoder, ImageEncoder, ImageError, ImageResult};
+use image::{codecs::{hdr::HdrDecoder, png::{self, PngDecoder, PngEncoder}}, ImageDecoder, ImageEncoder, ImageError, ImageResult};
 use std::{fs::File, io::{BufRead, BufReader, Read, Write}, path::Path};
 
-/// Reads the data from an HdrDecoder as a slice of RGBE8 texels.
-pub fn decode_radiance<R:BufRead>(dec: hdr::HdrDecoder<R>) -> ImageResult<Box<[RGBE8]>> {
+/// Reads the data from an [HdrDecoder] as a slice of [RGBE8] texels.
+pub fn decode_radiance<R:BufRead>(dec: HdrDecoder<R>) -> ImageResult<Box<[RGBE8]>> {
     let meta = dec.metadata();
     let size = (meta.width * meta.height) as usize;
     let mut out = bytemuck::allocation::zeroed_slice_box::<RGBE8>(size);
@@ -14,8 +14,8 @@ pub fn decode_radiance<R:BufRead>(dec: hdr::HdrDecoder<R>) -> ImageResult<Box<[R
     Ok(out)
 }
 
-/// Reads the and converts data from an HdrDecoder as a slice of RGB9E5 texels.
-pub fn decode_radiance_as_rgb9e5<R:BufRead>(dec: hdr::HdrDecoder<R>) -> ImageResult<Box<[RGB9E5]>> {
+/// Reads the and converts data from an [HdrDecoder] as a slice of RGB9E5 texels.
+pub fn decode_radiance_as_rgb9e5<R:BufRead>(dec: HdrDecoder<R>) -> ImageResult<Box<[RGB9E5]>> {
     let meta = dec.metadata();
     let size = (meta.width * meta.height) as usize;
     let mut out = bytemuck::allocation::zeroed_slice_box::<RGB9E5>(size);
@@ -26,17 +26,17 @@ pub fn decode_radiance_as_rgb9e5<R:BufRead>(dec: hdr::HdrDecoder<R>) -> ImageRes
 }
 
 
-/// Loads a radiance file, returning the dimensions and a slice of the pixel data.
+/// Loads a radiance file, returning the dimensions and a slice of [RGBE8] texel data.
 pub fn load_radiance_file(path: &Path) -> ImageResult<(u32, u32, Box<[RGBE8]>)> {
     let file = File::open(path).map_err(ImageError::IoError)?;
-    let decoder = hdr::HdrDecoder::new(BufReader::new(file))?;
+    let decoder = HdrDecoder::new(BufReader::new(file))?;
     let meta = decoder.metadata();
     let data = decode_radiance(decoder)?;
     Ok((meta.width, meta.height, data))
 }
 
-/// Reads the data from an PngDecoder as a slice of RGBE8 texels.
-pub fn decode_rgbe8_png<R:Read>(dec: png::PngDecoder<R>) -> ImageResult<Box<[RGBE8]>> {
+/// Reads the data from an [PngDecoder] as a slice of [RGBE8] texels.
+pub fn decode_rgbe8_png<R:Read>(dec: PngDecoder<R>) -> ImageResult<Box<[RGBE8]>> {
     let (width, height) = dec.dimensions();
     let size = (width * height) as usize;
     let mut out = bytemuck::allocation::zeroed_slice_box::<RGBE8>(size);
@@ -44,8 +44,8 @@ pub fn decode_rgbe8_png<R:Read>(dec: png::PngDecoder<R>) -> ImageResult<Box<[RGB
     Ok(out)
 }
 
-/// Reads the and converts data from an PngDecoder as a slice of RGB9E5 texels.
-pub fn decode_rgbe8_png_as_rgb9e5<R:Read>(dec: png::PngDecoder<R>) -> ImageResult<Box<[RGB9E5]>> {
+/// Reads the and converts data from an [PngDecoder] as a slice of [RGB9E5] texels.
+pub fn decode_rgbe8_png_as_rgb9e5<R:Read>(dec: PngDecoder<R>) -> ImageResult<Box<[RGB9E5]>> {
     let (width, height) = dec.dimensions();
     let size = (width * height) as usize;
     let mut orig = bytemuck::allocation::zeroed_slice_box::<RGBE8>(size);
@@ -54,35 +54,35 @@ pub fn decode_rgbe8_png_as_rgb9e5<R:Read>(dec: png::PngDecoder<R>) -> ImageResul
     Ok(out)
 }
 
-/// Loads an RGBE8-format PNG file, returning the dimensions and a slice of the pixel data.
+/// Loads an [RGBE8]-format PNG file, returning the dimensions and a slice of the pixel data.
 pub fn load_rgbe8_png_file(path: &Path) -> ImageResult<(u32, u32, Box<[RGBE8]>)> {
     let file = File::open(path).map_err(ImageError::IoError)?;
-    let decoder = png::PngDecoder::new(file)?;
+    let decoder = PngDecoder::new(file)?;
     let (width, height) = decoder.dimensions();
     let data = decode_rgbe8_png(decoder)?;
     Ok((width, height, data))
 }
 
-/// Loads an RGBE8-format PNG file, returning the dimensions and a slice of the pixel data converted to RGB9E5 format.
-/// This is intended for loading HDR textures for use on the GPU.
+/// Loads an RGBE8-format PNG file, returning the dimensions and a slice of the pixel data converted to [RGB9E5] format.
+/// This is intended for loading HDR textures to use on the GPU.
 pub fn load_rgbe8_png_file_as_rgb9e5(path: &Path) -> ImageResult<(u32, u32, Box<[RGB9E5]>)> {
     let file = File::open(path).map_err(ImageError::IoError)?;
-    let decoder = png::PngDecoder::new(file)?;
+    let decoder = PngDecoder::new(file)?;
     let (width, height) = decoder.dimensions();
     let data = decode_rgbe8_png_as_rgb9e5(decoder)?;
     Ok((width, height, data))
 }
 
-/// Encodes RGBE8 texel data into RGBA8 PNG format, storing the exponent in the alpha channel.
+/// Encodes [RGBE8] texel data into RGBA8 PNG format, storing the exponent in the alpha channel.
 ///
 /// Note that PNG compression is slow, so this is intended for asset creation.
 pub fn encode_rgbe8_png<W: Write>(width: u32, height: u32, data: &[RGBE8], out: W) -> ImageResult<()> {
-    let encoder = png::PngEncoder::new_with_quality(out, png::CompressionType::Best, png::FilterType::Adaptive);
+    let encoder = PngEncoder::new_with_quality(out, png::CompressionType::Best, png::FilterType::Adaptive);
     encoder.write_image(bytemuck::cast_slice(data), width, height, image::ColorType::Rgba8)?;
     Ok(())
 }
 
-/// Saves RGBE8 texel data into RGBA8 PNG file, storing the exponent in the alpha channel.
+/// Saves [RGBE8] texel data into RGBA8 PNG file, storing the exponent in the alpha channel.
 /// This package also exports a command-line tool (hdr2rgbe-png) for converting Radiance HDR images to RGBE8-PNG.
 ///
 /// Note that PNG compression is slow, so this is intended for asset creation.
